@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080705">
+<title>Atlas — Metals Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════ */
+:root {
+  --ink:      #080705;
+  --ink2:     #0d0b08;
+  --ink3:     #141108;
+  --ink4:     #1c170f;
+  --ink5:     #252018;
+  --line:     #2e2618;
+  --line2:    #3d3422;
+  --gold:     #c8912a;
+  --gold2:    #e0a83a;
+  --gold3:    #f8c85a;
+  --gold4:    #fde090;
+  --silver:   #8ab0c4;
+  --silver2:  #aacce0;
+  --silver3:  #cce8f8;
+  --cream:    #f2e8d8;
+  --cream2:   #d8ccb8;
+  --cream3:   #b8a888;
+  --dust:     #887860;
+  --dust2:    #605040;
+  --green:    #50d890;
+  --green2:   #28b868;
+  --red:      #f05848;
+  --red2:     #c83028;
+  --amber:    #f8c040;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { scroll-behavior: smooth; }
+body {
+  min-height: 100vh; background: var(--ink);
+  color: var(--cream); font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden; -webkit-font-smoothing: antialiased;
+}
+
+/* ── BACKGROUND ATMOSPHERE ── */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%,   rgba(200,145,42,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 100%,  rgba(138,176,196,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 80% at 50% 50%,  rgba(8,7,5,0.5) 0%, transparent 100%);
+}
+#bg-canvas::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity: 1;
+}
+
+#app { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ═══════════════════════════════════════
+   HEADER
+═══════════════════════════════════════ */
+#header {
+  padding: calc(var(--safe-top) + 14px) 20px 14px;
+  background: rgba(8,7,5,0.92); backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 200;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; gap: 12px;
+}
+.hdr-brand { display: flex; align-items: center; gap: 10px; }
+.hdr-logo {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(145deg, var(--gold2), #6a4808);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; box-shadow: 0 0 24px rgba(200,145,42,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.hdr-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600; color: var(--gold3);
+  letter-spacing: 0.5px; line-height: 1;
+}
+.hdr-tagline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--dust); letter-spacing: 3px; margin-top: 3px;
+}
+
+/* session clock — center */
+.session-clock {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+#session-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 2px; color: var(--dust);
+}
+#session-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px;
+  font-weight: 500; color: var(--cream2);
+}
+.session-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  margin-right: 5px; vertical-align: middle;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.dot-ny     { background: var(--green); }
+.dot-london { background: var(--gold3); }
+.dot-asia   { background: var(--silver2); }
+.dot-closed { background: var(--dust); animation: none; }
+
+.hdr-right { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.hdr-run-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--dust); letter-spacing: 1px; text-align: right;
+}
+#lastRunTime { color: var(--gold2); display: block; font-size: 11px; margin-top: 2px; }
+
+/* ═══════════════════════════════════════
+   MAIN
+═══════════════════════════════════════ */
+main { flex: 1; padding: 18px 14px calc(var(--safe-bot) + 20px); display: flex; flex-direction: column; gap: 14px; }
+
+/* ── MICRO LABEL ── */
+.mlabel {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--dust); letter-spacing: 3px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.mlabel::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* ═══════════════════════════════════════
+   CONTROL PANEL
+═══════════════════════════════════════ */
+.control-panel {
+  background: var(--ink3); border: 1px solid var(--line);
+  border-radius: 20px; padding: 20px;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.scope-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.scope-btn {
+  padding: 12px 6px; border-radius: 11px;
+  border: 1px solid var(--line); background: var(--ink2);
+  color: var(--dust); font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; cursor: pointer; transition: all 0.22s; letter-spacing: 1px;
+  text-align: center;
+}
+.scope-btn.on {
+  border-color: var(--gold); color: var(--gold4);
+  background: rgba(200,145,42,0.1);
+  box-shadow: 0 0 20px rgba(200,145,42,0.15), inset 0 1px 0 rgba(200,145,42,0.1);
+}
+.scope-btn:active { transform: scale(0.96); }
+
+/* RISK CALCULATOR */
+.risk-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+}
+.risk-field { }
+.risk-field label {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--dust); letter-spacing: 2px; display: block; margin-bottom: 6px;
+}
+.risk-field input {
+  width: 100%; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--ink2);
+  color: var(--cream); font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 500; outline: none;
+  transition: border-color 0.2s;
+}
+.risk-field input:focus { border-color: var(--gold); }
+.risk-field input::placeholder { color: var(--dust2); }
+
+/* THE BIG BUTTON */
+.fire-btn {
+  width: 100%; padding: 20px 24px; border-radius: 14px; border: none;
+  cursor: pointer; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #d4a030 0%, #906010 40%, #d4a030 100%);
+  background-size: 200% 100%;
+  font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600;
+  color: #080705; letter-spacing: 1px;
+  box-shadow: 0 6px 40px rgba(200,145,42,0.45), 0 2px 0 rgba(255,255,255,0.1) inset;
+  transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.fire-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: translateX(-100%); transition: transform 0.8s ease;
+}
+.fire-btn:not(:disabled):hover::before { transform: translateX(100%); }
+.fire-btn:not(:disabled):active { transform: scale(0.985); box-shadow: 0 3px 20px rgba(200,145,42,0.35); }
+.fire-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.fspin {
+  width: 20px; height: 20px; border: 2.5px solid rgba(8,7,5,0.25);
+  border-top-color: #080705; border-radius: 50%;
+  animation: spin 0.7s linear infinite; display: none; flex-shrink: 0;
+}
+.fire-btn.loading .fspin { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════
+   STATUS & ERROR
+═══════════════════════════════════════ */
+.status-bar {
+  background: rgba(200,145,42,0.07); border: 1px solid rgba(200,145,42,0.2);
+  border-radius: 13px; padding: 13px 18px;
+  display: none; align-items: center; gap: 12px;
+}
+.status-bar.on { display: flex; animation: fadeUp 0.3s ease; }
+.sdot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--gold2); animation: breathe 1.8s ease-in-out infinite;
+}
+@keyframes breathe { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
+.stext { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gold2); letter-spacing: 0.3px; }
+
+.err-bar {
+  background: rgba(240,88,72,0.08); border: 1px solid rgba(240,88,72,0.3);
+  border-radius: 13px; padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--red); line-height: 1.7; display: none;
+}
+.err-bar.on { display: block; animation: fadeUp 0.3s ease; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+
+/* ═══════════════════════════════════════
+   VERDICT CARD — the hero decision widget
+═══════════════════════════════════════ */
+.verdict-card {
+  border-radius: 20px; overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 80px rgba(0,0,0,0.7);
+  display: none;
+}
+.verdict-card.on { display: block; animation: fadeUp 0.5s cubic-bezier(.4,0,.2,1); }
+
+/* verdict header */
+.vhdr {
+  padding: 22px 22px 18px;
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: start; gap: 16px;
+}
+.vhdr-gold   { background: linear-gradient(135deg, rgba(200,145,42,0.22) 0%, rgba(200,145,42,0.05) 60%, transparent 100%); border-bottom: 1px solid rgba(200,145,42,0.2); }
+.vhdr-silver { background: linear-gradient(135deg, rgba(138,176,196,0.18) 0%, rgba(138,176,196,0.04) 60%, transparent 100%); border-bottom: 1px solid rgba(138,176,196,0.18); }
+
+.vhdr-left {}
+.v-ticker {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 3px; margin-bottom: 8px;
+}
+.vtg { color: var(--gold); }
+.vts { color: var(--silver); }
+.v-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: -1px;
+}
+.vpg { color: var(--gold4); }
+.vps { color: var(--silver3); }
+.v-chg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; margin-top: 6px; font-weight: 500;
+}
+
+.vhdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+/* THE VERDICT BADGE — most important element */
+.verdict-badge {
+  padding: 10px 22px; border-radius: 50px;
+  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700;
+  letter-spacing: 1px; line-height: 1;
+}
+.vb-BUY  { background: rgba(80,216,144,0.14); color: var(--green);  border: 1.5px solid rgba(80,216,144,0.4); box-shadow: 0 0 30px rgba(80,216,144,0.15); }
+.vb-SELL { background: rgba(240,88,72,0.14);  color: var(--red);    border: 1.5px solid rgba(240,88,72,0.4);  box-shadow: 0 0 30px rgba(240,88,72,0.15); }
+.vb-WAIT { background: rgba(248,192,64,0.1);  color: var(--amber);  border: 1.5px solid rgba(248,192,64,0.3); }
+.vb-HOLD { background: rgba(248,192,64,0.1);  color: var(--amber);  border: 1.5px solid rgba(248,192,64,0.3); }
+
+.v-meta { display: flex; gap: 7px; align-items: center; }
+.v-grade {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+  padding: 5px 12px; border-radius: 8px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--line2); color: var(--cream2);
+}
+.v-rr {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  padding: 5px 12px; border-radius: 8px;
+  background: rgba(200,145,42,0.1); border: 1px solid rgba(200,145,42,0.25); color: var(--gold2);
+}
+
+/* ═══════════════════════════════════════
+   CONFIDENCE METER
+═══════════════════════════════════════ */
+.vbody { background: var(--ink3); padding: 20px 22px; display: flex; flex-direction: column; gap: 20px; }
+
+.conf-meter {}
+.cm-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.cm-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dust); letter-spacing: 2.5px; }
+.cm-score { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; line-height: 1; }
+.cm-verdict-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dust); margin-top: 4px; }
+
+/* segmented confidence bar */
+.cm-segs { display: flex; gap: 3px; height: 8px; margin-bottom: 8px; }
+.cm-seg { flex: 1; border-radius: 50px; background: var(--ink5); transition: background 0.8s ease; }
+
+.cm-sizing {
+  background: var(--ink4); border-radius: 12px; padding: 12px 16px;
+  border: 1px solid var(--line); display: flex; align-items: center; gap: 12px;
+}
+.cm-sizing-icon { font-size: 18px; flex-shrink: 0; }
+.cm-sizing-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cream2); line-height: 1.5; }
+.cm-sizing-text b { color: var(--gold3); }
+
+/* ═══════════════════════════════════════
+   VISUAL LEVEL DIAGRAM
+═══════════════════════════════════════ */
+.level-diagram {}
+.ld-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dust); letter-spacing: 2.5px; margin-bottom: 14px; }
+
+.ld-chart {
+  position: relative; background: var(--ink4); border-radius: 14px;
+  border: 1px solid var(--line); padding: 16px 16px 16px 100px; min-height: 200px;
+  overflow: hidden;
+}
+
+/* Price axis labels */
+.ld-levels-axis { position: absolute; left: 0; top: 0; bottom: 0; width: 96px; display: flex; flex-direction: column; justify-content: space-between; padding: 14px 10px 14px 0; }
+.ld-axis-item { display: flex; flex-direction: column; align-items: flex-end; }
+.ld-axis-name { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px; }
+.ld-axis-val  { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; margin-top: 1px; }
+.ldn-tp2   { color: #7af8c0; } .ldv-tp2   { color: #7af8c0; }
+.ldn-tp1   { color: var(--green); } .ldv-tp1 { color: var(--green); }
+.ldn-entry { color: var(--cream); } .ldv-entry { color: var(--cream); }
+.ldn-sl    { color: var(--red); } .ldv-sl    { color: var(--red); }
+
+/* horizontal lines */
+.ld-line {
+  position: absolute; left: 96px; right: 0; height: 1px; display: flex; align-items: center;
+}
+.ld-line-inner { flex: 1; height: 1px; }
+.ld-line-tp2   .ld-line-inner { background: rgba(122,248,192,0.4); border-top: 1px dashed rgba(122,248,192,0.5); }
+.ld-line-tp1   .ld-line-inner { background: rgba(80,216,144,0.4);  border-top: 1px dashed rgba(80,216,144,0.5); }
+.ld-line-entry .ld-line-inner { background: rgba(242,232,216,0.5); border-top: 2px solid rgba(242,232,216,0.6); }
+.ld-line-sl    .ld-line-inner { background: rgba(240,88,72,0.4);   border-top: 1px dashed rgba(240,88,72,0.5); }
+
+/* price bar */
+.ld-bar-wrap { position: absolute; right: 20px; top: 0; bottom: 0; width: 28px; display: flex; flex-direction: column; justify-content: space-between; padding: 14px 0; }
+.ld-zone-tp2   { flex: 1; background: rgba(122,248,192,0.08); border-radius: 4px 4px 0 0; border: 1px solid rgba(122,248,192,0.2); border-bottom: none; }
+.ld-zone-tp1   { flex: 1; background: rgba(80,216,144,0.12);  border-radius: 0; border: 1px solid rgba(80,216,144,0.2); border-top: none; border-bottom: none; }
+.ld-zone-entry { flex: 1; background: rgba(242,232,216,0.06); border: 2px solid rgba(242,232,216,0.3); position: relative; }
+.ld-zone-entry::after { content: '▶'; position: absolute; left: -18px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--cream3); }
+.ld-zone-sl    { flex: 1; background: rgba(240,88,72,0.08);   border-radius: 0 0 4px 4px; border: 1px solid rgba(240,88,72,0.2); border-top: none; }
+
+/* risk calc result */
+.risk-result {
+  background: var(--ink4); border-radius: 12px; padding: 14px 16px;
+  border: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+.rr-cell { text-align: center; }
+.rr-cell-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dust); letter-spacing: 2px; margin-bottom: 5px; }
+.rr-cell-val { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; }
+.rrc-risk   { color: var(--red); }
+.rrc-reward { color: var(--green); }
+.rrc-size   { color: var(--gold3); }
+
+/* ═══════════════════════════════════════
+   SIGNAL DRIVERS
+═══════════════════════════════════════ */
+.drivers-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.drv {
+  background: var(--ink4); border-radius: 12px; padding: 12px 10px;
+  border: 1px solid var(--line); text-align: center;
+}
+.drv-icon  { font-size: 18px; margin-bottom: 5px; }
+.drv-name  { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dust); letter-spacing: 1.5px; margin-bottom: 4px; }
+.drv-val   { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+.drv-sub   { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dust); margin-top: 3px; }
+.drv.bull  { border-color: rgba(80,216,144,0.3); background: rgba(80,216,144,0.07); }
+.drv.bear  { border-color: rgba(240,88,72,0.3);  background: rgba(240,88,72,0.07); }
+.drv.neut  { border-color: rgba(248,192,64,0.25);background: rgba(248,192,64,0.06); }
+
+/* ═══════════════════════════════════════
+   ANALYSIS ROWS
+═══════════════════════════════════════ */
+.an-block {}
+.an-rows  { display: flex; flex-direction: column; gap: 8px; }
+.an-row {
+  background: var(--ink4); border-radius: 13px; padding: 15px 16px;
+  border: 1px solid var(--line); display: flex; gap: 13px; align-items: flex-start;
+}
+.an-ico  { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+.an-body {}
+.an-lbl  { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dust); letter-spacing: 2px; margin-bottom: 5px; }
+.an-txt  { font-size: 14px; line-height: 1.65; color: var(--cream2); font-weight: 300; }
+.an-txt b { color: var(--cream); font-weight: 500; }
+.an-row.risk .an-txt { color: #f08070; }
+.an-row.inv  .an-txt { color: var(--amber); }
+.an-row.rat  .an-txt { color: var(--silver2); }
+
+/* ═══════════════════════════════════════
+   SCENARIOS
+═══════════════════════════════════════ */
+.scen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.scen {
+  background: var(--ink4); border-radius: 14px; padding: 16px;
+  border: 1px solid var(--line);
+}
+.scen-hdr  { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+.scen-ico  { font-size: 16px; }
+.scen-lbl  { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; font-weight: 600; }
+.scen-bull .scen-lbl { color: var(--green); }
+.scen-bear .scen-lbl { color: var(--red); }
+.scen-txt  { font-size: 13px; line-height: 1.65; color: var(--cream3); font-weight: 300; }
+
+/* ═══════════════════════════════════════
+   MACRO PANEL
+═══════════════════════════════════════ */
+.macro-panel {
+  background: var(--ink3); border: 1px solid var(--line);
+  border-radius: 20px; padding: 20px 20px 22px;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.6);
+  display: none;
+}
+.macro-panel.on { display: block; animation: fadeUp 0.5s ease 0.12s both; }
+
+.macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+.mc {
+  background: var(--ink4); border-radius: 13px; padding: 14px 15px; border: 1px solid var(--line);
+}
+.mc-lbl  { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dust); letter-spacing: 2px; margin-bottom: 6px; }
+.mc-val  { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; line-height: 1; }
+.mc-trnd { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dust); margin-top: 5px; line-height: 1.4; }
+
+.macro-narr {
+  background: var(--ink4); border-radius: 14px; padding: 18px;
+  border: 1px solid var(--line); font-size: 15px; line-height: 1.85;
+  color: var(--cream2); font-weight: 300;
+}
+.macro-narr b { color: var(--gold2); font-weight: 500; }
+
+/* ═══════════════════════════════════════
+   TRADE JOURNAL
+═══════════════════════════════════════ */
+.journal-panel {
+  background: var(--ink3); border: 1px solid var(--line);
+  border-radius: 20px; padding: 20px;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.6);
+}
+
+.journal-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.jf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.jf-field label {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--dust); letter-spacing: 2px; display: block; margin-bottom: 5px;
+}
+.jf-field input, .jf-field select {
+  width: 100%; padding: 10px 13px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--ink2);
+  color: var(--cream); font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.jf-field input:focus, .jf-field select:focus { border-color: var(--gold); }
+.jf-field select option { background: var(--ink2); }
+
+.journal-add-btn {
+  width: 100%; padding: 12px; border-radius: 11px; border: 1px solid var(--gold);
+  background: rgba(200,145,42,0.1); color: var(--gold3);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+}
+.journal-add-btn:active { transform: scale(0.98); }
+
+/* journal entries */
+.journal-entries { display: flex; flex-direction: column; gap: 8px; }
+.j-entry {
+  background: var(--ink4); border-radius: 13px; padding: 14px 16px;
+  border: 1px solid var(--line); display: flex; align-items: center; gap: 12px;
+}
+.je-side {
+  width: 52px; padding: 5px 0; border-radius: 8px; text-align: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+  flex-shrink: 0;
+}
+.je-long  { background: rgba(80,216,144,0.15); color: var(--green); border: 1px solid rgba(80,216,144,0.3); }
+.je-short { background: rgba(240,88,72,0.15);  color: var(--red);   border: 1px solid rgba(240,88,72,0.3); }
+.je-body  { flex: 1; min-width: 0; }
+.je-meta  { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--cream2); margin-bottom: 3px; }
+.je-pnl   { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; }
+.je-pnl.pos { color: var(--green); }
+.je-pnl.neg { color: var(--red); }
+.je-pnl.neu { color: var(--dust); }
+.je-date  { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dust); }
+.je-del   { background: none; border: none; color: var(--dust2); cursor: pointer; font-size: 16px; padding: 4px; flex-shrink: 0; transition: color 0.2s; }
+.je-del:active { color: var(--red); }
+
+.journal-empty {
+  text-align: center; padding: 24px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--dust2); line-height: 1.7;
+}
+
+/* journal stats */
+.jstats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.jstat { background: var(--ink4); border-radius: 12px; padding: 12px; border: 1px solid var(--line); text-align: center; }
+.jstat-lbl { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dust); letter-spacing: 1.5px; margin-bottom: 5px; }
+.jstat-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; }
+
+/* ═══════════════════════════════════════
+   BOTTOM NAV
+═══════════════════════════════════════ */
+#bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 720px;
+  padding: 10px 14px calc(var(--safe-bot) + 10px);
+  background: rgba(8,7,5,0.97); border-top: 1px solid var(--line);
+  backdrop-filter: blur(20px); z-index: 200;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+.nav-btn {
+  padding: 11px 8px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--ink2);
+  color: var(--dust); font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; letter-spacing: 0.5px;
+}
+.nav-btn span { font-size: 16px; }
+.nav-btn.on {
+  border-color: var(--gold); color: var(--gold3);
+  background: rgba(200,145,42,0.1);
+}
+.nav-btn:active { transform: scale(0.96); }
+
+/* bottom padding for nav */
+main { padding-bottom: calc(var(--safe-bot) + 80px); }
+
+/* ═══════════════════════════════════════
+   TABS
+═══════════════════════════════════════ */
+.tab-content { display: none; }
+.tab-content.on { display: flex; flex-direction: column; gap: 14px; }
+
+/* ═══════════════════════════════════════
+   DISCLAIMER
+═══════════════════════════════════════ */
+.disclaimer {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dust2);
+  text-align: center; line-height: 1.7; padding: 14px 8px 4px;
+  border-top: 1px solid var(--line);
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="bg-canvas"></div>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="hdr-brand">
+      <div class="hdr-logo">⚡</div>
+      <div>
+        <div class="hdr-name">Atlas</div>
+        <div class="hdr-tagline">METALS SIGNAL PRO</div>
+      </div>
+    </div>
+    <div class="session-clock">
+      <div id="session-label">SESSION</div>
+      <div id="session-time">—</div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-run-time">
+        LAST RUN
+        <span id="lastRunTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ── TAB: SIGNAL ── -->
+    <div class="tab-content on" id="tab-signal">
+
+      <!-- CONTROL PANEL -->
+      <div class="control-panel">
+        <div class="mlabel">SCOPE</div>
+        <div class="scope-grid">
+          <button class="scope-btn on" id="sc-both"   onclick="setScope('both')">XAU + XAG</button>
+          <button class="scope-btn"    id="sc-gold"   onclick="setScope('gold')">Gold Only</button>
+          <button class="scope-btn"    id="sc-silver" onclick="setScope('silver')">Silver Only</button>
+        </div>
+        <div class="mlabel">RISK CALCULATOR</div>
+        <div class="risk-row">
+          <div class="risk-field">
+            <label>ACCOUNT SIZE ($)</label>
+            <input type="number" id="accSize" placeholder="10,000" value="10000" inputmode="decimal">
+          </div>
+          <div class="risk-field">
+            <label>RISK PER TRADE (%)</label>
+            <input type="number" id="riskPct" placeholder="1.0" value="1" step="0.1" inputmode="decimal">
+          </div>
+        </div>
+        <button class="fire-btn" id="fireBtn" onclick="runAnalysis()">
+          <div class="fspin"></div>
+          <span id="btnLabel">⚡ Run Full Analysis</span>
+        </button>
+      </div>
+
+      <!-- STATUS -->
+      <div class="status-bar" id="statusBar">
+        <div class="sdot"></div>
+        <div class="stext" id="statusText">Initializing...</div>
+      </div>
+
+      <!-- ERROR -->
+      <div class="err-bar" id="errBar"></div>
+
+      <!-- GOLD VERDICT -->
+      <div class="verdict-card" id="goldCard">
+        <div class="vhdr vhdr-gold">
+          <div class="vhdr-left">
+            <div class="v-ticker vtg">XAU / USD · GOLD</div>
+            <div class="v-price vpg" id="g-price">—</div>
+            <div class="v-chg" id="g-chg">—</div>
+          </div>
+          <div class="vhdr-right">
+            <div class="verdict-badge" id="g-verdict">—</div>
+            <div class="v-meta">
+              <div class="v-grade" id="g-grade">—</div>
+              <div class="v-rr"    id="g-rr">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="vbody">
+
+          <!-- Confidence Meter -->
+          <div class="conf-meter">
+            <div class="cm-top">
+              <div class="cm-label">SIGNAL CONFIDENCE</div>
+              <div class="cm-score" id="g-conf-score">—</div>
+            </div>
+            <div class="cm-segs" id="g-conf-segs"></div>
+            <div class="cm-verdict-text" id="g-conf-text">—</div>
+            <div class="cm-sizing" id="g-sizing">
+              <div class="cm-sizing-icon">💰</div>
+              <div class="cm-sizing-text" id="g-sizing-text">Run analysis to get position sizing.</div>
+            </div>
+          </div>
+
+          <!-- Visual Level Diagram -->
+          <div class="level-diagram">
+            <div class="ld-label">TRADE SETUP — VISUAL LEVELS</div>
+            <div class="ld-chart">
+              <div class="ld-levels-axis">
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-tp2">TARGET 2</div><div class="ld-axis-val ldv-tp2" id="g-tp2-ax">—</div></div>
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-tp1">TARGET 1</div><div class="ld-axis-val ldv-tp1" id="g-tp1-ax">—</div></div>
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-entry">ENTRY</div>  <div class="ld-axis-val ldv-entry" id="g-entry-ax">—</div></div>
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-sl">STOP</div>      <div class="ld-axis-val ldv-sl" id="g-sl-ax">—</div></div>
+              </div>
+              <div class="ld-line ld-line-tp2"   style="top:12%">  <div class="ld-line-inner"></div></div>
+              <div class="ld-line ld-line-tp1"   style="top:30%">  <div class="ld-line-inner"></div></div>
+              <div class="ld-line ld-line-entry" style="top:54%">  <div class="ld-line-inner"></div></div>
+              <div class="ld-line ld-line-sl"    style="top:80%">  <div class="ld-line-inner"></div></div>
+              <div class="ld-bar-wrap">
+                <div class="ld-zone-tp2"></div>
+                <div class="ld-zone-tp1"></div>
+                <div class="ld-zone-entry"></div>
+                <div class="ld-zone-sl"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Calc Result -->
+          <div class="risk-result" id="g-risk-result">
+            <div class="rr-cell"><div class="rr-cell-label">$ AT RISK</div><div class="rr-cell-val rrc-risk" id="g-dollar-risk">—</div></div>
+            <div class="rr-cell"><div class="rr-cell-label">$ REWARD TP1</div><div class="rr-cell-val rrc-reward" id="g-dollar-reward">—</div></div>
+            <div class="rr-cell"><div class="rr-cell-label">POSITION $</div><div class="rr-cell-val rrc-size" id="g-pos-size">—</div></div>
+          </div>
+
+          <!-- Signal Drivers -->
+          <div>
+            <div class="mlabel">SIGNAL DRIVERS</div>
+            <div class="drivers-grid" id="g-drivers"></div>
+          </div>
+
+          <!-- Analysis -->
+          <div class="an-block">
+            <div class="mlabel">TRADE ANALYSIS</div>
+            <div class="an-rows" id="g-analysis"></div>
+          </div>
+
+          <!-- Scenarios -->
+          <div>
+            <div class="mlabel">SCENARIOS</div>
+            <div class="scen-grid">
+              <div class="scen scen-bull"><div class="scen-hdr"><div class="scen-ico">🚀</div><div class="scen-lbl">BULL CASE</div></div><div class="scen-txt" id="g-bull">—</div></div>
+              <div class="scen scen-bear"><div class="scen-hdr"><div class="scen-ico">⚡</div><div class="scen-lbl">BEAR CASE</div></div><div class="scen-txt" id="g-bear">—</div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SILVER VERDICT -->
+      <div class="verdict-card" id="silverCard">
+        <div class="vhdr vhdr-silver">
+          <div class="vhdr-left">
+            <div class="v-ticker vts">XAG / USD · SILVER</div>
+            <div class="v-price vps" id="s-price">—</div>
+            <div class="v-chg" id="s-chg">—</div>
+          </div>
+          <div class="vhdr-right">
+            <div class="verdict-badge" id="s-verdict">—</div>
+            <div class="v-meta">
+              <div class="v-grade" id="s-grade">—</div>
+              <div class="v-rr"    id="s-rr">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="vbody">
+          <div class="conf-meter">
+            <div class="cm-top">
+              <div class="cm-label">SIGNAL CONFIDENCE</div>
+              <div class="cm-score" id="s-conf-score">—</div>
+            </div>
+            <div class="cm-segs" id="s-conf-segs"></div>
+            <div class="cm-verdict-text" id="s-conf-text">—</div>
+            <div class="cm-sizing"><div class="cm-sizing-icon">💰</div><div class="cm-sizing-text" id="s-sizing-text">Run analysis to get position sizing.</div></div>
+          </div>
+          <div class="level-diagram">
+            <div class="ld-label">TRADE SETUP — VISUAL LEVELS</div>
+            <div class="ld-chart">
+              <div class="ld-levels-axis">
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-tp2">TARGET 2</div><div class="ld-axis-val ldv-tp2" id="s-tp2-ax">—</div></div>
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-tp1">TARGET 1</div><div class="ld-axis-val ldv-tp1" id="s-tp1-ax">—</div></div>
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-entry">ENTRY</div>  <div class="ld-axis-val ldv-entry" id="s-entry-ax">—</div></div>
+                <div class="ld-axis-item"><div class="ld-axis-name ldn-sl">STOP</div>      <div class="ld-axis-val ldv-sl" id="s-sl-ax">—</div></div>
+              </div>
+              <div class="ld-line ld-line-tp2"   style="top:12%"><div class="ld-line-inner"></div></div>
+              <div class="ld-line ld-line-tp1"   style="top:30%"><div class="ld-line-inner"></div></div>
+              <div class="ld-line ld-line-entry" style="top:54%"><div class="ld-line-inner"></div></div>
+              <div class="ld-line ld-line-sl"    style="top:80%"><div class="ld-line-inner"></div></div>
+              <div class="ld-bar-wrap">
+                <div class="ld-zone-tp2"></div>
+                <div class="ld-zone-tp1"></div>
+                <div class="ld-zone-entry"></div>
+                <div class="ld-zone-sl"></div>
+              </div>
+            </div>
+          </div>
+          <div class="risk-result">
+            <div class="rr-cell"><div class="rr-cell-label">$ AT RISK</div><div class="rr-cell-val rrc-risk" id="s-dollar-risk">—</div></div>
+            <div class="rr-cell"><div class="rr-cell-label">$ REWARD TP1</div><div class="rr-cell-val rrc-reward" id="s-dollar-reward">—</div></div>
+            <div class="rr-cell"><div class="rr-cell-label">POSITION $</div><div class="rr-cell-val rrc-size" id="s-pos-size">—</div></div>
+          </div>
+          <div>
+            <div class="mlabel">SIGNAL DRIVERS</div>
+            <div class="drivers-grid" id="s-drivers"></div>
+          </div>
+          <div class="an-block">
+            <div class="mlabel">TRADE ANALYSIS</div>
+            <div class="an-rows" id="s-analysis"></div>
+          </div>
+          <div>
+            <div class="mlabel">SCENARIOS</div>
+            <div class="scen-grid">
+              <div class="scen scen-bull"><div class="scen-hdr"><div class="scen-ico">🚀</div><div class="scen-lbl">BULL CASE</div></div><div class="scen-txt" id="s-bull">—</div></div>
+              <div class="scen scen-bear"><div class="scen-hdr"><div class="scen-ico">⚡</div><div class="scen-lbl">BEAR CASE</div></div><div class="scen-txt" id="s-bear">—</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="disclaimer">⚠ For informational purposes only. Not financial advice.<br>Always apply your own judgment and risk management.</div>
+
+    </div><!-- /tab-signal -->
+
+    <!-- ── TAB: MACRO ── -->
+    <div class="tab-content" id="tab-macro">
+      <div class="macro-panel on" id="macroPanel">
+        <div class="mlabel">LIVE MACRO SNAPSHOT</div>
+        <div class="macro-grid">
+          <div class="mc"><div class="mc-lbl">DXY</div>        <div class="mc-val" id="m-dxy">—</div>   <div class="mc-trnd" id="m-dxy-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">10Y YIELD</div>  <div class="mc-val" id="m-yield">—</div> <div class="mc-trnd" id="m-yield-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">VIX</div>        <div class="mc-val" id="m-vix">—</div>   <div class="mc-trnd" id="m-vix-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">S&amp;P 500</div><div class="mc-val" id="m-spx">—</div>   <div class="mc-trnd" id="m-spx-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">WTI CRUDE</div>  <div class="mc-val" id="m-oil">—</div>   <div class="mc-trnd" id="m-oil-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">TIPS 10Y</div>   <div class="mc-val" id="m-tips">—</div>  <div class="mc-trnd" id="m-tips-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">GLD FLOWS</div>  <div class="mc-val" id="m-gld">—</div>   <div class="mc-trnd" id="m-gld-t">—</div></div>
+          <div class="mc"><div class="mc-lbl">COMPASS</div>    <div class="mc-val" id="m-comp">—</div>  <div class="mc-trnd" id="m-comp-t">—</div></div>
+        </div>
+        <div class="macro-narr" id="macroNarr">Run analysis to load macro environment narrative.</div>
+      </div>
+      <div class="disclaimer">⚠ For informational purposes only. Not financial advice.</div>
+    </div>
+
+    <!-- ── TAB: JOURNAL ── -->
+    <div class="tab-content" id="tab-journal">
+      <div class="journal-panel">
+        <div class="mlabel">TRADE JOURNAL</div>
+
+        <!-- Stats -->
+        <div class="jstats">
+          <div class="jstat"><div class="jstat-lbl">WIN RATE</div><div class="jstat-val" id="j-winrate" style="color:var(--green)">—</div></div>
+          <div class="jstat"><div class="jstat-lbl">TOTAL P&amp;L</div><div class="jstat-val" id="j-pnl">—</div></div>
+          <div class="jstat"><div class="jstat-lbl">TRADES</div><div class="jstat-val" id="j-count" style="color:var(--cream2)">0</div></div>
+        </div>
+
+        <!-- Add trade form -->
+        <div class="mlabel">LOG A TRADE</div>
+        <div class="journal-form">
+          <div class="jf-row">
+            <div class="jf-field">
+              <label>METAL</label>
+              <select id="j-metal">
+                <option value="XAU">Gold (XAU)</option>
+                <option value="XAG">Silver (XAG)</option>
+              </select>
+            </div>
+            <div class="jf-field">
+              <label>DIRECTION</label>
+              <select id="j-dir">
+                <option value="LONG">Long (Buy)</option>
+                <option value="SHORT">Short (Sell)</option>
+              </select>
+            </div>
+          </div>
+          <div class="jf-row">
+            <div class="jf-field">
+              <label>ENTRY PRICE</label>
+              <input type="number" id="j-entry" placeholder="3000.00" inputmode="decimal">
+            </div>
+            <div class="jf-field">
+              <label>EXIT PRICE</label>
+              <input type="number" id="j-exit" placeholder="3050.00" inputmode="decimal">
+            </div>
+          </div>
+          <div class="jf-row">
+            <div class="jf-field">
+              <label>POSITION SIZE ($)</label>
+              <input type="number" id="j-size" placeholder="1000" inputmode="decimal">
+            </div>
+            <div class="jf-field">
+              <label>OUTCOME</label>
+              <select id="j-outcome">
+                <option value="WIN">Win</option>
+                <option value="LOSS">Loss</option>
+                <option value="OPEN">Still Open</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <button class="journal-add-btn" onclick="addJournalEntry()">+ Log Trade</button>
+
+        <!-- Entries -->
+        <div style="margin-top:16px">
+          <div class="mlabel">TRADE HISTORY</div>
+          <div class="journal-entries" id="journalEntries">
+            <div class="journal-empty">No trades logged yet.<br>Add your first trade above.</div>
+          </div>
+        </div>
+
+      </div>
+      <div class="disclaimer">⚠ For informational purposes only. Not financial advice.</div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <button class="nav-btn on" id="nav-signal"  onclick="switchTab('signal')"> <span>⚡</span>SIGNAL</button>
+    <button class="nav-btn"    id="nav-macro"   onclick="switchTab('macro')">  <span>📊</span>MACRO</button>
+    <button class="nav-btn"    id="nav-journal" onclick="switchTab('journal')"><span>📒</span>JOURNAL</button>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════
+const GEMINI_KEY = 'PASTE_YOUR_KEY_HERE';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+let scope = 'both';
+
+// ═══════════════════════════════════════════════════
+// SESSION CLOCK
+// ═══════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const utcH = now.getUTCHours();
+  const utcM = now.getUTCMinutes();
+  const utcTotal = utcH * 60 + utcM;
+
+  let session, dotClass, label;
+
+  // NY: 13:30–22:00 UTC | London: 07:00–16:30 UTC | Asia: 23:00–08:00 UTC
+  const overlap_NY_London = utcTotal >= 13*60+30 && utcTotal < 16*60+30;
+  if (overlap_NY_London) {
+    session = 'NY + LONDON'; dotClass = 'dot-ny'; label = '🟢 PEAK VOLUME';
+  } else if (utcTotal >= 13*60+30 && utcTotal < 22*60) {
+    session = 'NEW YORK'; dotClass = 'dot-ny'; label = '🟢 NY SESSION';
+  } else if (utcTotal >= 7*60 && utcTotal < 16*60+30) {
+    session = 'LONDON'; dotClass = 'dot-london'; label = '🟡 LONDON SESSION';
+  } else if (utcTotal >= 23*60 || utcTotal < 8*60) {
+    session = 'ASIA'; dotClass = 'dot-asia'; label = '🔵 ASIA SESSION';
+  } else {
+    session = 'TRANSITIONING'; dotClass = 'dot-closed'; label = '⚪ LOW VOLUME';
+  }
+
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+
+  document.getElementById('session-label').innerHTML = `<span class="session-dot ${dotClass}"></span>${label}`;
+  document.getElementById('session-time').textContent = `${hh}:${mm}:${ss}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ═══════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════
+function switchTab(tab) {
+  ['signal','macro','journal'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('on', t===tab);
+    document.getElementById('nav-'+t).classList.toggle('on', t===tab);
+  });
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════════════
+// SCOPE
+// ═══════════════════════════════════════════════════
+function setScope(s) {
+  scope = s;
+  ['both','gold','silver'].forEach(x =>
+    document.getElementById('sc-'+x).classList.toggle('on', x===s)
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// CONFIDENCE SEGMENTS
+// ═══════════════════════════════════════════════════
+function renderConfSegs(containerId, conf, color) {
+  const total = 10;
+  const filled = Math.round(conf / 10);
+  let html = '';
+  for (let i = 0; i < total; i++) {
+    const lit = i < filled;
+    const opacity = lit ? 1 : 0.12;
+    html += `<div class="cm-seg" style="background:${lit ? color : 'var(--ink5)'}; opacity:${opacity}; transition: background 0.8s ease ${i*0.05}s"></div>`;
+  }
+  document.getElementById(containerId).innerHTML = html;
+  // Animate in
+  setTimeout(() => {
+    const segs = document.getElementById(containerId).children;
+    for (let i = 0; i < segs.length; i++) {
+      segs[i].style.opacity = i < filled ? '1' : '0.12';
+      segs[i].style.background = i < filled ? color : 'var(--ink5)';
+    }
+  }, 100);
+}
+
+// ═══════════════════════════════════════════════════
+// RISK CALCULATOR
+// ═══════════════════════════════════════════════════
+function calcRisk(entryStr, slStr, tp1Str, conf) {
+  const accSize = parseFloat(document.getElementById('accSize').value) || 10000;
+  const riskPct = parseFloat(document.getElementById('riskPct').value) || 1;
+
+  // Adjust risk by confidence
+  const adjRisk = conf >= 70 ? riskPct : conf >= 55 ? riskPct * 0.6 : riskPct * 0.3;
+  const dollarRisk = accSize * (adjRisk / 100);
+
+  // Parse entry (use midpoint if range)
+  const entryClean = String(entryStr).replace(/[^0-9.-]/g,'');
+  const entryParts = String(entryStr).split('-').map(x => parseFloat(x.replace(/[^0-9.]/g,'')));
+  const entryMid = entryParts.length === 2 ? (entryParts[0] + entryParts[1]) / 2 : parseFloat(entryClean);
+  const sl = parseFloat(String(slStr).replace(/[^0-9.]/g,''));
+  const tp1 = parseFloat(String(tp1Str).replace(/[^0-9.]/g,''));
+
+  if (isNaN(entryMid) || isNaN(sl) || isNaN(tp1)) return null;
+
+  const riskPerUnit = Math.abs(entryMid - sl);
+  const rewardPerUnit = Math.abs(tp1 - entryMid);
+  const units = riskPerUnit > 0 ? dollarRisk / riskPerUnit : 0;
+  const positionValue = units * entryMid;
+  const dollarReward = units * rewardPerUnit;
+
+  return {
+    dollarRisk: dollarRisk.toFixed(0),
+    dollarReward: dollarReward.toFixed(0),
+    positionValue: positionValue.toFixed(0),
+    adjRiskPct: adjRisk.toFixed(1)
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN ANALYSIS
+// ═══════════════════════════════════════════════════
+async function runAnalysis() {
+  const btn = document.getElementById('fireBtn');
+  btn.disabled = true; btn.classList.add('loading');
+  document.getElementById('btnLabel').textContent = 'Analyzing...';
+  ['errBar','goldCard','silverCard'].forEach(id =>
+    document.getElementById(id).classList.remove('on')
+  );
+
+  const scopeText = scope==='gold' ? 'Gold (XAU/USD) only' :
+                    scope==='silver' ? 'Silver (XAG/USD) only' :
+                    'both Gold (XAU/USD) and Silver (XAG/USD)';
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  showStatus('Searching live market prices...');
+
+  const prompt = `Elite macro precious metals trader & quant analyst. Today: ${today}. Analyze ${scopeText}.
+
+Search Google for LIVE current prices: XAU/USD spot, XAG/USD spot (with % change today), DXY (with % change), US 10Y Treasury yield, US 10Y TIPS real yield, VIX, S&P 500, WTI crude oil price, GLD ETF recent flow trend (tonnes), Fed balance sheet recent trend, Reverse Repo Facility usage trend, TGA balance trend.
+
+ANALYSIS STEPS:
+1. Macro Compass 0-5 (+1 each: weak/falling DXY, falling TIPS real yield, rising oil inflation signal, risk-off SPX falling or VIX above 20, Fed easing expectations pricing)
+2. Liquidity score 0-4 (Fed BS expanding, RRP facility declining, TGA declining each = +1)
+3. GLD ETF: recent inflows=bullish, outflows=bearish
+4. H4 technical structure: identify current trend (bullish/bearish/ranging), nearest key support/resistance levels, entry zone within 0.5% of live price, stop loss beyond nearest structural level minimum 1.5x recent ATR, TP1 = 1.5-2x risk with label describing the target level, TP2 = 3-4x risk with label
+5. Silver industrial demand: STRONG/MODERATE/WEAK (copper price trend, China PMI, EV/solar/AI demand signals)
+6. Confidence score weighted sum: Compass 30% + yields/policy 20% + technical 25% + liquidity 15% + ETF flows 5% + industrial demand 5%. HARD CAP at 55% if Compass<=2 AND liquidity<=1
+7. Bull case: specific macro + technical conditions that would accelerate price to TP2 (2 sentences)
+8. Bear case: specific conditions that trigger invalidation and stop loss (2 sentences)
+
+Output raw JSON only — absolutely no markdown, no backticks, no explanation text before or after:
+{"goldPrice":"","goldChg":"","silverPrice":"","silverChg":"","ratio":"","dxy":"","dxyChg":"","dxyBull":false,"dxyTrend":"","yield10y":"","yieldTrend":"","vix":"","vixTrend":"","spx":"","spxTrend":"","spxBull":false,"oil":"","oilTrend":"","tips":"","tipsTrend":"","gldFlows":"","gldFlowsSub":"","macroNarrative":"","gold":{"price":"","action":"","grade":"","confidence":0,"entry":"","sl":"","tp1":"","tp1Label":"","tp2":"","tp2Label":"","rr":"","compassScore":0,"liquidity":"","bias":"","execution":"","keyWatch":"","risk":"","invalidation":"","bullCase":"","bearCase":"","ratioNote":""},"silver":{"price":"","action":"","grade":"","confidence":0,"entry":"","sl":"","tp1":"","tp1Label":"","tp2":"","tp2Label":"","rr":"","compassScore":0,"liquidity":"","bias":"","industrial":"","execution":"","keyWatch":"","risk":"","invalidation":"","bullCase":"","bearCase":"","ratioNote":""}}`;
+
+  try {
+    showStatus('Running macro compass, technical analysis & signal weighting...');
+
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents: [{parts:[{text:prompt}]}],
+        tools: [{google_search:{}}],
+        generationConfig: {temperature:0.1, maxOutputTokens:8192}
+      })
+    });
+
+    const raw = await res.json();
+    if (!res.ok) throw new Error(raw.error?.message || 'API error '+res.status);
+
+    const text = (raw.candidates?.[0]?.content?.parts||[])
+      .filter(p=>p.text).map(p=>p.text).join('');
+
+    // Robust JSON extraction
+    const cleaned = text.replace(/```json|```/g,'').trim();
+    const jsonStart = cleaned.indexOf('{');
+    if (jsonStart === -1) throw new Error('No data returned. Try again.');
+    let jsonStr = cleaned.slice(jsonStart);
+
+    // Auto-repair truncated JSON
+    if (!jsonStr.trimEnd().endsWith('}')) {
+      let open = 0;
+      for (const ch of jsonStr) { if(ch==='{') open++; else if(ch==='}') open--; }
+      jsonStr = jsonStr.trimEnd().replace(/,\s*$/,'');
+      for (let i=0; i<open; i++) jsonStr += '}';
+    }
+
+    const data = JSON.parse(jsonStr);
+    hideStatus();
+    renderAll(data);
+    document.getElementById('lastRunTime').textContent = new Date().toLocaleTimeString();
+
+  } catch(err) {
+    hideStatus();
+    showErr(err.message);
+    console.error(err);
+  }
+
+  btn.disabled = false; btn.classList.remove('loading');
+  document.getElementById('btnLabel').textContent = '⚡ Run Full Analysis';
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function renderAll(data) {
+  if ((scope==='both'||scope==='gold')   && data.gold)   renderMetal('gold', data);
+  if ((scope==='both'||scope==='silver') && data.silver) renderMetal('silver', data);
+  renderMacro(data);
+}
+
+function renderMetal(m, data) {
+  const isG = m === 'gold';
+  const p = isG ? 'g' : 's';
+  const d = isG ? data.gold : data.silver;
+  const lp = isG ? data.goldPrice : data.silverPrice;
+  const lc = isG ? data.goldChg   : data.silverChg;
+
+  // Header
+  setText(p+'-price', '$'+fmtPrice(d.price||lp));
+  const chgEl = document.getElementById(p+'-chg');
+  if (lc) {
+    chgEl.textContent = lc;
+    chgEl.style.color = String(lc).startsWith('+')?'var(--green)':String(lc).startsWith('-')?'var(--red)':'var(--dust)';
+  }
+
+  const act = (d.action||'WAIT').toUpperCase();
+  const vEl = document.getElementById(p+'-verdict');
+  vEl.textContent = act;
+  vEl.className = 'verdict-badge vb-'+(act.includes('BUY')?'BUY':act.includes('SELL')?'SELL':'WAIT');
+
+  setText(p+'-grade', d.grade||'—');
+  setText(p+'-rr', 'R:R '+(d.rr||'—'));
+
+  // Confidence
+  const conf = parseInt(d.confidence)||0;
+  const confColor = conf>=70?'var(--green)':conf>=55?'var(--amber)':'var(--red)';
+  const confLabel = conf>=75?'HIGH CONVICTION — Full position size recommended':
+                   conf>=60?'MODERATE — Use 50–75% of standard position size':
+                   conf>=50?'CAUTIOUS — Limit to 25–50% position size':
+                   'WEAK SIGNAL — Wait for better setup or skip';
+  setColor(p+'-conf-score', conf+'%', confColor);
+  setText(p+'-conf-text', confLabel);
+  renderConfSegs(p+'-conf-segs', conf, confColor);
+
+  // Sizing
+  const risk = calcRisk(d.entry, d.sl, d.tp1, conf);
+  const accSize = parseFloat(document.getElementById('accSize').value)||10000;
+  const riskPct = parseFloat(document.getElementById('riskPct').value)||1;
+  if (risk) {
+    document.getElementById(p+'-sizing-text').innerHTML =
+      `Risking <b>$${risk.dollarRisk}</b> (${risk.adjRiskPct}% of $${accSize.toLocaleString()}) — position size <b>$${parseFloat(risk.positionValue).toLocaleString()}</b> — potential reward TP1: <b>$${parseFloat(risk.dollarReward).toLocaleString()}</b>`;
+    setText(p+'-dollar-risk',   '$'+parseFloat(risk.dollarRisk).toLocaleString());
+    setText(p+'-dollar-reward', '$'+parseFloat(risk.dollarReward).toLocaleString());
+    setText(p+'-pos-size',      '$'+parseFloat(risk.positionValue).toLocaleString());
+  }
+
+  // Visual level diagram axis
+  setText(p+'-tp2-ax',   d.tp2||'—');
+  setText(p+'-tp1-ax',   d.tp1||'—');
+  setText(p+'-entry-ax', d.entry||'—');
+  setText(p+'-sl-ax',    d.sl||'—');
+
+  // Drivers
+  const cs = parseInt(d.compassScore)||0;
+  const liq = (d.liquidity||'').toLowerCase();
+  const bias = (d.bias||'').toLowerCase();
+  let drvs = '';
+  drvs += drv('🧭', 'COMPASS', `${cs}/5`, cs>=4?'Strong bull':cs>=3?'Mild bull':cs<=1?'Bearish':'Neutral', cs>=3?'bull':cs<=1?'bear':'neut');
+  drvs += drv('💧', 'LIQUIDITY', d.liquidity||'—', liq.includes('bull')?'Supportive':'Neutral/Tight', liq.includes('bull')?'bull':liq.includes('tight')?'bear':'neut');
+  drvs += drv('📐', 'BIAS', d.bias||'—', bias.includes('bull')?'Bullish structure':bias.includes('bear')?'Bearish structure':'Ranging', bias.includes('bull')?'bull':bias.includes('bear')?'bear':'neut');
+  if (d.industrial) {
+    const ind = d.industrial.toUpperCase();
+    drvs += drv('🏭', 'INDUSTRIAL', ind, ind==='STRONG'?'Strong demand':ind==='WEAK'?'Weak demand':'Mixed signals', ind==='STRONG'?'bull':ind==='WEAK'?'bear':'neut');
+  }
+  document.getElementById(p+'-drivers').innerHTML = drvs;
+
+  // Analysis rows
+  let rows = '';
+  if (d.execution)    rows += anRow('📍','ENTRY EXECUTION', d.execution, '');
+  if (d.keyWatch)     rows += anRow('👁', 'KEY LEVEL WATCH',  d.keyWatch,  '');
+  if (d.risk)         rows += anRow('⚠️','PRIMARY RISK',     d.risk,      'risk');
+  if (d.invalidation) rows += anRow('✗', 'INVALIDATION',     d.invalidation,'inv');
+  if (d.ratioNote)    rows += anRow('⚖', 'RATIO ANALYSIS',   d.ratioNote, 'rat');
+  document.getElementById(p+'-analysis').innerHTML = rows;
+
+  // Scenarios
+  setText(p+'-bull', d.bullCase||'—');
+  setText(p+'-bear', d.bearCase||'—');
+
+  document.getElementById(isG?'goldCard':'silverCard').classList.add('on');
+}
+
+function renderMacro(data) {
+  const mc = (id,val,trnd,color) => {
+    const e = document.getElementById('m-'+id);
+    const t = document.getElementById('m-'+id+'-t');
+    if (e) { e.textContent = val||'—'; if(color) e.style.color = color; }
+    if (t)   t.textContent = trnd||'—';
+  };
+  mc('dxy',   data.dxy,                         data.dxyTrend,   data.dxyBull?'var(--red)':'var(--green)');
+  mc('yield', data.yield10y?data.yield10y+'%':'—', data.yieldTrend);
+  mc('vix',   data.vix,                         data.vixTrend,   parseFloat(data.vix)>20?'var(--red)':'var(--green)');
+  mc('spx',   data.spx,                         data.spxTrend,   data.spxBull?'var(--green)':'var(--red)');
+  mc('oil',   data.oil?'$'+data.oil:'—',        data.oilTrend);
+  mc('tips',  data.tips?data.tips+'%':'—',      data.tipsTrend);
+  mc('gld',   data.gldFlows,                    data.gldFlowsSub, data.gldFlows&&data.gldFlows.toLowerCase().includes('in')?'var(--green)':'var(--red)');
+  const cs = data.gold?(parseInt(data.gold.compassScore)||0):0;
+  mc('comp', cs+'/5', cs>=3?'Bullish environment':cs<=1?'Bearish environment':'Neutral', cs>=3?'var(--green)':cs<=1?'var(--red)':'var(--amber)');
+  if (data.macroNarrative) {
+    document.getElementById('macroNarr').innerHTML = data.macroNarrative.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TRADE JOURNAL
+// ═══════════════════════════════════════════════════
+let journal = JSON.parse(localStorage.getItem('atlas_journal_v1')||'[]');
+
+function saveJournal() { localStorage.setItem('atlas_journal_v1', JSON.stringify(journal)); }
+
+function addJournalEntry() {
+  const metal   = document.getElementById('j-metal').value;
+  const dir     = document.getElementById('j-dir').value;
+  const entry   = parseFloat(document.getElementById('j-entry').value);
+  const exit    = parseFloat(document.getElementById('j-exit').value);
+  const size    = parseFloat(document.getElementById('j-size').value);
+  const outcome = document.getElementById('j-outcome').value;
+
+  if (isNaN(entry) || isNaN(size)) { alert('Please fill in Entry Price and Position Size.'); return; }
+
+  const pnlPct = (!isNaN(exit) && entry > 0) ? ((exit - entry) / entry * 100 * (dir==='SHORT'?-1:1)) : null;
+  const pnlDollar = pnlPct !== null ? (size * pnlPct / 100) : null;
+
+  journal.unshift({
+    id: Date.now(),
+    metal, dir, entry, exit: isNaN(exit)?null:exit,
+    size, outcome, pnlPct, pnlDollar,
+    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+  });
+  saveJournal();
+  renderJournal();
+
+  // Clear form
+  document.getElementById('j-entry').value = '';
+  document.getElementById('j-exit').value  = '';
+  document.getElementById('j-size').value  = '';
+}
+
+function deleteEntry(id) {
+  journal = journal.filter(e => e.id !== id);
+  saveJournal();
+  renderJournal();
+}
+
+function renderJournal() {
+  const container = document.getElementById('journalEntries');
+
+  if (journal.length === 0) {
+    container.innerHTML = '<div class="journal-empty">No trades logged yet.<br>Add your first trade above.</div>';
+    document.getElementById('j-winrate').textContent = '—';
+    document.getElementById('j-pnl').textContent = '—';
+    document.getElementById('j-count').textContent = '0';
+    return;
+  }
+
+  // Stats
+  const closed = journal.filter(e => e.outcome !== 'OPEN');
+  const wins = closed.filter(e => e.outcome === 'WIN').length;
+  const winRate = closed.length > 0 ? Math.round(wins/closed.length*100) : 0;
+  const totalPnL = journal.reduce((s,e) => s + (e.pnlDollar||0), 0);
+
+  document.getElementById('j-winrate').textContent = closed.length > 0 ? winRate+'%' : '—';
+  document.getElementById('j-winrate').style.color = winRate>=50?'var(--green)':'var(--red)';
+  document.getElementById('j-pnl').textContent = totalPnL >= 0 ? '+$'+Math.abs(totalPnL).toFixed(0) : '-$'+Math.abs(totalPnL).toFixed(0);
+  document.getElementById('j-pnl').style.color = totalPnL>=0?'var(--green)':'var(--red)';
+  document.getElementById('j-count').textContent = journal.length;
+
+  // Entries
+  container.innerHTML = journal.map(e => {
+    const pnlStr = e.pnlDollar !== null
+      ? (e.pnlDollar >= 0 ? '+$'+Math.abs(e.pnlDollar).toFixed(0) : '-$'+Math.abs(e.pnlDollar).toFixed(0))
+      : 'Open';
+    const pnlClass = e.pnlDollar === null ? 'neu' : e.pnlDollar >= 0 ? 'pos' : 'neg';
+    return `<div class="j-entry">
+      <div class="je-side ${e.dir==='LONG'?'je-long':'je-short'}">${e.dir}</div>
+      <div class="je-body">
+        <div class="je-meta">${e.metal} · Entry $${e.entry} ${e.exit?'→ $'+e.exit:''}</div>
+        <div class="je-pnl ${pnlClass}">${pnlStr}</div>
+        <div class="je-date">${e.date} · $${e.size.toLocaleString()} position</div>
+      </div>
+      <button class="je-del" onclick="deleteEntry(${e.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function drv(icon, name, val, sub, cls) {
+  return `<div class="drv ${cls}">
+    <div class="drv-icon">${icon}</div>
+    <div class="drv-name">${name}</div>
+    <div class="drv-val">${val}</div>
+    <div class="drv-sub">${sub}</div>
+  </div>`;
+}
+function anRow(ico, lbl, txt, cls) {
+  return `<div class="an-row ${cls}">
+    <div class="an-ico">${ico}</div>
+    <div class="an-body"><div class="an-lbl">${lbl}</div><div class="an-txt">${txt}</div></div>
+  </div>`;
+}
+function setText(id, v) { const e=document.getElementById(id); if(e) e.textContent=v; }
+function setColor(id, v, c) { const e=document.getElementById(id); if(e){e.textContent=v;e.style.color=c;} }
+function fmtPrice(p) {
+  const n = parseFloat(String(p).replace(/,/g,''));
+  if (isNaN(n)) return String(p);
+  return n > 100
+    ? n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
+    : n.toFixed(2);
+}
+function showStatus(msg) {
+  document.getElementById('statusBar').classList.add('on');
+  document.getElementById('statusText').textContent = msg;
+}
+function hideStatus() { document.getElementById('statusBar').classList.remove('on'); }
+function showErr(msg) {
+  const e = document.getElementById('errBar');
+  e.textContent = '⚠ '+msg; e.classList.add('on');
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+renderJournal();
+</script>
+</body>
+</html>
